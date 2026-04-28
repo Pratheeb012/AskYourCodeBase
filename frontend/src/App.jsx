@@ -1,13 +1,13 @@
 import React, { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
-import { useRepoStore, useAuthStore, useThemeStore } from './store'
+import { useRepoStore, useAuthStore } from './store'
 import Sidebar from './components/Sidebar'
 import ChatPanel from './components/ChatPanel'
 import CodePanel from './components/CodePanel'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { Sun, Moon } from 'lucide-react'
 import './index.css'
 
@@ -23,9 +23,7 @@ function ProtectedRoute({ children }) {
 }
 
 function NavBar() {
-  const { user, logout } = useAuthStore()
-  const { theme, toggleTheme } = useThemeStore()
-
+  const { user, logout, theme, toggleTheme } = useAuthStore()
   return (
     <nav className="navbar">
       <div className="navbar-left">
@@ -43,25 +41,12 @@ function NavBar() {
       </div>
       <div className="navbar-right">
         <button
-          className="btn btn-secondary btn-icon"
+          className="btn-icon theme-toggle"
           onClick={toggleTheme}
-          style={{ width: '40px', height: '40px', borderRadius: '50%', padding: 0 }}
-          title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
         >
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={theme}
-              initial={{ rotate: -90, opacity: 0 }}
-              animate={{ rotate: 0, opacity: 1 }}
-              exit={{ rotate: 90, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            >
-              {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-            </motion.div>
-          </AnimatePresence>
+          {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
         </button>
-
         {user && (
           <>
             <div className="navbar-user">
@@ -85,14 +70,13 @@ function NavBar() {
 
 function MainApp() {
   const { fetchRepos } = useRepoStore()
-  const { theme } = useThemeStore()
 
   useEffect(() => {
     fetchRepos()
   }, [])
 
   return (
-    <div className={`app-shell ${theme === 'light' ? 'light-theme' : ''}`}>
+    <div className="app-shell">
       <NavBar />
       <div className="app-layout">
         <Sidebar />
@@ -114,11 +98,8 @@ function MainApp() {
 }
 
 export default function App() {
-  const { theme } = useThemeStore()
-
   return (
-    <div className={theme === 'light' ? 'light-theme' : ''} style={{ height: '100vh', background: 'var(--bg-app)' }}>
-      <BrowserRouter>
+    <BrowserRouter>
       <Toaster
         position="top-right"
         toastOptions={{
@@ -149,4 +130,3 @@ export default function App() {
     </BrowserRouter>
   )
 }
-

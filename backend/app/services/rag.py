@@ -81,13 +81,14 @@ def generate_rag_response(
     rewrite: bool = True,
 ) -> dict:
     """
-    Multi-Agent RAG pipeline using smolagents:
-    1. Researcher Agent: Specializes in using the search_codebase tool.
-    2. Manager Agent: Coordinates the researcher and provides the final answer.
+    Robust RAG pipeline using direct Groq calls.
+    1. Rewrite query (optional)
+    2. Search codebase
+    3. Synthesize answer
     """
     start_time = time.time()
 
-    # Guardrail 1: Input Safety/Relevance
+    # Guardrail: Input Safety/Relevance
     if not check_query_safety(query):
         return {
             "rewritten_query": query,
@@ -97,90 +98,104 @@ def generate_rag_response(
             "response_time_ms": int((time.time() - start_time) * 1000),
         }
 
-    # 1. Setup Model
-    model = LiteLLMModel(
-        model_id=f"groq/{settings.GROQ_MODEL}",
-        api_key=settings.GROQ_API_KEY,
-    )
+    # 1. Query Rewriting / Search Optimization
+    search_query = query
+    if rewrite:
+        try:
+            rewrite_prompt = f"Given the user query: '{query}', generate a single technical search query (keywords, function names, etc.) to find relevant code in a repository. Respond with ONLY the search query."
+            res = client.chat.completions.create(
+                model=settings.GROQ_MODEL,
+                messages=[{"role": "user", "content": rewrite_prompt}],
+                max_tokens=50,
+                temperature=0,
+            )
+            search_query = res.choices[0].message.content.strip().strip('"')
+        except Exception:
+            search_query = query
 
-    # 2. Setup Tools
-    search_tool = SearchCodebaseTool(index_dir=index_dir, top_k=top_k)
-
-    # 3. Setup Researcher Agent
-    researcher = ToolCallingAgent(
-        tools=[search_tool],
-        model=model,
-        name="code_researcher",
-        description="A specialist that searches the codebase to find relevant code snippets for a query.",
-    )
-
-    # 4. Setup Manager (Synthesis)
-    # We use a direct model call for the manager to avoid tool-calling overhead/errors
-    def run_manager(findings, original_query):
-        synthesis_prompt = f"""You are a senior technical lead reviewing a researcher's findings.
-Based on the code snippets found below, provide a final, polished answer to the user.
-Ensure the answer is accurate, well-formatted, and cites the correct files.
-
-Researcher's Findings:
-{findings}
-
-User Original Question: {original_query}"""
+    # 2. Retrieve relevant chunks
+    retrieved = search_index(index_dir, search_query, top_k=top_k)
+    
+    # Filter out massive lock-files and duplicate snippets from the same file
+    # to save tokens and prevent Rate Limits (429)
+    filtered_retrieved = []
+    seen_files = {}
+    
+    for chunk, score in retrieved:
+        path = chunk['file_path'].lower()
+        if any(ignore in path for ignore in ['package-lock.json', 'yarn.lock', 'pnpm-lock.yaml', 'poetry.lock', '.pyc']):
+            continue
         
-        response = client.chat.completions.create(
+        # Limit to max 2 snippets per file to ensure variety and token efficiency
+        seen_files[path] = seen_files.get(path, 0) + 1
+        if seen_files[path] <= 2:
+            filtered_retrieved.append((chunk, score))
+            
+    # Keep only the top 5 most relevant snippets to stay safe with token limits
+    filtered_retrieved = filtered_retrieved[:5]
+
+    if not filtered_retrieved:
+        return {
+            "rewritten_query": search_query,
+            "answer": "I couldn't find any relevant code snippets (excluding lock files). Try a more specific technical query.",
+            "references": [],
+            "tokens_used": 0,
+            "response_time_ms": int((time.time() - start_time) * 1000),
+        }
+
+    # 3. Synthesize Final Answer
+    context_parts = []
+    for i, (chunk, score) in enumerate(filtered_retrieved, 1):
+        context_parts.append(
+            f"File: {chunk['file_path']} (lines {chunk['start_line']}-{chunk['end_line']})\n"
+            f"```\n{chunk['content']}\n```"
+        )
+    context = "\n\n".join(context_parts)
+
+    system_prompt = """You are a senior software engineer assistant. 
+Your goal is to answer the user's question accurately using ONLY the provided code snippets as context.
+If the snippets don't contain the answer, say you don't know based on the current context.
+Always cite file names when explaining code."""
+
+    user_prompt = f"""User Question: {query}
+
+Code Context:
+{context}
+
+Final Answer:"""
+
+    try:
+        completion = client.chat.completions.create(
             model=settings.GROQ_MODEL,
-            messages=[{"role": "user", "content": synthesis_prompt}],
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
             max_tokens=2048,
             temperature=0.1,
         )
-        return response.choices[0].message.content
-
-    # 5. Run Multi-Agent Flow
-    try:
-        # Agent 1: Researcher (Finds the code)
-        research_start = time.time()
-        research_task = f"Find and explain the most relevant code for: {query}"
-        research_output = researcher.run(research_task)
-        log_llm_transaction(
-            "code_researcher", 
-            research_task, 
-            research_output, 
-            int((time.time() - research_start) * 1000)
-        )
-        
-        # Step 2: Manager (Synthesizes the final answer)
-        manager_start = time.time()
-        answer = run_manager(research_output, query)
-        
-        log_llm_transaction(
-            "manager", 
-            "Synthesis", 
-            answer, 
-            int((time.time() - manager_start) * 1000)
-        )
-        
+        answer = completion.choices[0].message.content
     except Exception as e:
-        answer = f"An error occurred while processing your request: {str(e)}"
+        answer = f"An error occurred while generating the answer: {str(e)}"
 
-    elapsed_ms = int((time.time() - start_time) * 1000)
-
-    # 6. Extract references from the tool's last run
+    # 4. Format references for UI
     references = []
-    for chunk, score in search_tool.retrieved_chunks:
+    for chunk, score in filtered_retrieved:
         references.append({
             "file_path": chunk["file_path"],
             "start_line": chunk["start_line"],
             "end_line": chunk["end_line"],
             "content": chunk["content"],
             "language": chunk["language"],
-            "score": round(score, 4),
+            "score": round(float(score), 4),
         })
 
     return {
-        "rewritten_query": query,
+        "rewritten_query": search_query,
         "answer": answer,
         "references": references,
         "tokens_used": 0,
-        "response_time_ms": elapsed_ms,
+        "response_time_ms": int((time.time() - start_time) * 1000),
     }
 
 def generate_architecture_summary(index_dir: str) -> str:

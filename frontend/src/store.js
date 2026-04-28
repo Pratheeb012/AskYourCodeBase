@@ -2,10 +2,11 @@ import { create } from 'zustand'
 import { repoAPI, authAPI } from './api'
 
 // --- AUTH STORE ---
-export const useAuthStore = create((set) => ({
+export const useAuthStore = create((set, get) => ({
   user: null,
   token: localStorage.getItem('token') || null,
   loading: false,
+  theme: 'dark',
 
   // Restore session on app load
   restoreSession: async () => {
@@ -54,6 +55,12 @@ export const useAuthStore = create((set) => ({
     // Clear other stores
     useRepoStore.getState().clearRepos()
     useChatStore.getState().clearMessages()
+  },
+
+  toggleTheme: () => {
+    const newTheme = get().theme === 'dark' ? 'light' : 'dark'
+    document.documentElement.setAttribute('data-theme', newTheme)
+    set({ theme: newTheme })
   },
 }))
 
@@ -166,13 +173,4 @@ export const useChatStore = create((set, get) => ({
       set({ loading: false })
     }
   },
-}))
-
-export const useThemeStore = create((set) => ({
-  theme: localStorage.getItem('theme') || 'dark',
-  toggleTheme: () => set((state) => {
-    const newTheme = state.theme === 'dark' ? 'light' : 'dark'
-    localStorage.setItem('theme', newTheme)
-    return { theme: newTheme }
-  }),
 }))

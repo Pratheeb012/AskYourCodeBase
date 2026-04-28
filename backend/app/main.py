@@ -3,6 +3,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core import storage
 from app.api import repos, chat, auth
+import sys
+import io
+
+# Force UTF-8 for console output to handle emojis in paths
+if sys.stdout.encoding.lower() != 'utf-8':
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
 
 # Ensure all data directories exist on startup
 storage._ensure_dirs()
