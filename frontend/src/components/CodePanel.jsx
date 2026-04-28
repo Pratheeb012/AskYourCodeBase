@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
-import { useChatStore, useRepoStore } from '../store'
+import { vscDarkPlus, prism } from 'react-syntax-highlighter/dist/esm/styles/prism'
+import { useChatStore, useRepoStore, useThemeStore } from '../store'
 import { repoAPI, chatAPI } from '../api'
 import toast from 'react-hot-toast'
 
@@ -23,6 +23,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion'
 
 function CodeViewer({ chunk }) {
+  const { theme } = useThemeStore()
   return (
     <motion.div 
       initial={{ opacity: 0 }}
@@ -46,7 +47,7 @@ function CodeViewer({ chunk }) {
       <div className="code-viewer-content">
         <SyntaxHighlighter
           language={chunk.language || 'text'}
-          style={vscDarkPlus}
+          style={theme === 'dark' ? vscDarkPlus : prism}
           showLineNumbers
           startingLineNumber={chunk.start_line}
           customStyle={{
@@ -259,7 +260,7 @@ function DependencyTab({ repoId }) {
       animate={{ opacity: 1, scale: 1 }}
       ref={containerRef} 
       className="dep-container"
-      style={{ height: '600px', position: 'relative', overflow: 'hidden', background: '#050506' }}
+      style={{ height: '600px', position: 'relative', overflow: 'hidden', background: 'var(--bg-app)' }}
     >
       <svg width="100%" height="100%" style={{ position: 'absolute', top: 0, left: 0 }}>
         <defs>
