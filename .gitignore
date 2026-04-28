@@ -1,0 +1,40 @@
+# === SECRETS — NEVER COMMIT THESE ===
+backend/.env
+*.env
+
+# === PYTHON ===
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+.eggs/
+dist/
+build/
+venv/
+.venv/
+env/
+.tox/
+.mypy_cache/
+.pytest_cache/
+*.log
+
+# === DATA / INDEXES (large files generated at runtime) ===
+backend/data/uploads/
+backend/data/faiss_indexes/
+backend/data/repos.json
+
+# === NODE / FRONTEND ===
+node_modules/
+frontend/dist/
+frontend/.vite/
+
+# === IDE ===
+.vscode/
+.idea/
+*.suo
+*.user
+
+# === OS ===
+.DS_Store
+Thumbs.db

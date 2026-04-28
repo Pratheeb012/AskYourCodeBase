@@ -1,0 +1,20 @@
+{
+  "9377b227-a4cc-4340-a5af-ca999f59d5c4": {
+    "id": "9377b227-a4cc-4340-a5af-ca999f59d5c4",
+    "email": "pratheebsuriya786@gmail.com",
+    "username": "Pratheeb",
+    "hashed_password": "$2b$12$TI3c3WDWzz3fJzpY/OwBVOZRBopWvsUnH6ljpgtzIMks9zfnhLUkW",
+    "is_active": true,
+    "avatar_url": null,
+    "created_at": "2026-04-28T06:51:54.798796"
+  },
+  "72192c30-a848-4719-8c8b-ed43b2f22892": {
+    "id": "72192c30-a848-4719-8c8b-ed43b2f22892",
+    "email": "pratheebe17@gmail.com",
+    "username": "Suriya",
+    "hashed_password": "$2b$12$K30Jb.0DFCD4.Bbhjm0cb.MzcXJbb0xsb7XgzDlJ43UxWpASs6bbS",
+    "is_active": true,
+    "avatar_url": null,
+    "created_at": "2026-04-28T10:39:42.251579"
+  }
+}
