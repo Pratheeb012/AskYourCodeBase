@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
-import { useChatStore, useRepoStore } from '../store'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import { useChatStore, useRepoStore, useUIStore } from '../store'
 import { repoAPI, chatAPI } from '../api'
 import toast from 'react-hot-toast'
 
@@ -21,6 +23,28 @@ import {
   Sparkles
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+
+class TabErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props)
+    this.state = { hasError: false }
+  }
+  static getDerivedStateFromError() { return { hasError: true } }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="sidebar-state-msg" style={{ height: '100%', justifyContent: 'center' }}>
+          <AlertCircle size={48} style={{ color: 'var(--error)', opacity: 0.5, marginBottom: '16px' }} />
+          <p>Something went wrong loading this tab.</p>
+          <button className="btn btn-secondary" style={{ marginTop: '16px' }} onClick={() => this.setState({ hasError: false })}>
+            Try Again
+          </button>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
 
 function CodeViewer({ chunk }) {
   return (
@@ -243,12 +267,15 @@ function DependencyTab({ repoId }) {
     </div>
   )
 
-  if (!graph) return (
+  if (!graph || !graph.nodes || graph.nodes.length === 0) return (
     <div className="sidebar-state-msg" style={{ height: '100%', justifyContent: 'center', marginTop: '100px' }}>
       <Network size={48} style={{ opacity: 0.2, marginBottom: '24px' }} />
-      <p style={{ marginBottom: '24px' }}>Failed to map module dependencies.</p>
-      <button className="btn btn-secondary" onClick={load}>
-        <Maximize2 size={16} /> Retry Visualization
+      <p style={{ marginBottom: '12px' }}>No Python dependencies found.</p>
+      <span style={{ fontSize: '12px', color: 'var(--text-muted)', maxWidth: '280px', margin: '0 auto' }}>
+        The visual dependency map is currently optimized for Python module imports.
+      </span>
+      <button className="btn btn-secondary" style={{ marginTop: '24px' }} onClick={load}>
+        <Maximize2 size={16} /> Force Refresh
       </button>
     </div>
   )
@@ -320,7 +347,7 @@ function DependencyTab({ repoId }) {
 export default function CodePanel() {
   const { selectedChunk } = useChatStore()
   const { activeRepo } = useRepoStore()
-  const [activeTab, setActiveTab] = useState('code')
+  const { activeTab, setActiveTab } = useUIStore()
 
   const tabs = [
     { id: 'code', label: 'Source', icon: <FileText size={14} /> },
@@ -364,15 +391,21 @@ export default function CodePanel() {
           )}
 
           {activeTab === 'analysis' && activeRepo && (
-            <AnalysisTab repoId={activeRepo.id} key={activeRepo.id} />
+            <TabErrorBoundary>
+              <AnalysisTab repoId={activeRepo.id} key={activeRepo.id} />
+            </TabErrorBoundary>
           )}
 
           {activeTab === 'architecture' && activeRepo && (
-            <ArchitectureTab repoId={activeRepo.id} key={activeRepo.id} />
+            <TabErrorBoundary>
+              <ArchitectureTab repoId={activeRepo.id} key={activeRepo.id} />
+            </TabErrorBoundary>
           )}
 
           {activeTab === 'deps' && activeRepo && (
-            <DependencyTab repoId={activeRepo.id} key={activeRepo.id} />
+            <TabErrorBoundary>
+              <DependencyTab repoId={activeRepo.id} key={activeRepo.id} />
+            </TabErrorBoundary>
           )}
 
           {!activeRepo && activeTab !== 'code' && (

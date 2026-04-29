@@ -524,6 +524,30 @@ h1, h2, h3, h4, h5, h6 {
   max-width: 100%;
 }
 
+.message-bubble {
+  max-width: 85%;
+  padding: var(--sp-4) var(--sp-5);
+  border-radius: var(--radius-lg);
+  position: relative;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  overflow: hidden; /* Prevent child overflow */
+}
+
+.message-bubble pre {
+  max-width: 100%;
+  overflow-x: auto;
+  background: var(--bg-active) !important;
+  border-radius: var(--radius-md);
+  margin: var(--sp-3) 0;
+  border: 1px solid var(--border-default);
+}
+
+.message-bubble code {
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
 .message-avatar {
   width: 44px;
   height: 44px;

@@ -101,16 +101,21 @@ function Message({ msg, activeRepoId }) {
             components={{
               code({ node, inline, className, children, ...props }) {
                 const match = /language-(\w+)/.exec(className || '')
-                return !inline && match ? (
-                  <SyntaxHighlighter
-                    style={vscDarkPlus}
-                    language={match[1]}
-                    PreTag="div"
-                    customStyle={{ margin: 0, fontSize: '13px', background: 'transparent' }}
-                    {...props}
-                  >
-                    {String(children).replace(/\n$/, '')}
-                  </SyntaxHighlighter>
+                const language = match ? match[1] : 'text'
+                
+                return !inline ? (
+                  <div className="code-block-wrapper" style={{ margin: '12px 0', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border-default)' }}>
+                    {match && <div className="code-block-lang" style={{ background: 'var(--bg-active)', padding: '4px 12px', fontSize: '10px', color: 'var(--text-muted)', borderBottom: '1px solid var(--border-default)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{language}</div>}
+                    <SyntaxHighlighter
+                      style={vscDarkPlus}
+                      language={language}
+                      PreTag="div"
+                      customStyle={{ margin: 0, padding: '16px', fontSize: '13px', background: 'transparent' }}
+                      {...props}
+                    >
+                      {String(children).replace(/\n$/, '')}
+                    </SyntaxHighlighter>
+                  </div>
                 ) : (
                   <code className={className} {...props}>{children}</code>
                 )
@@ -177,7 +182,7 @@ function WelcomeScreen({ onSuggestion }) {
         className="welcome-hero"
       >
         <div className="navbar-logo-icon" style={{ fontSize: '64px', marginBottom: '24px' }}>🧠</div>
-        <h1 className="welcome-title">AI Code Intelligence</h1>
+        <h1 className="welcome-title">RepoMind</h1>
         <p className="welcome-subtitle">
           {activeRepo
             ? `Analyzing ${activeRepo.name} with ${activeRepo.chunk_count} code segments indexed.`

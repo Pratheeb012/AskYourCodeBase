@@ -9,6 +9,33 @@ from app.services.observability import log_llm_transaction
 # Groq Client for utility tasks
 client = Groq(api_key=settings.GROQ_API_KEY)
 
+def safe_chat_completion(messages: list, max_tokens: int = 1024, temperature: float = 0.1, model: str = None):
+    """
+    Executes a chat completion with automatic failover if rate limited.
+    """
+    primary_model = model or settings.GROQ_MODEL
+    fallback_model = settings.GROQ_FALLBACK_MODEL
+
+    try:
+        # Try Primary
+        return client.chat.completions.create(
+            model=primary_model,
+            messages=messages,
+            max_tokens=max_tokens,
+            temperature=temperature,
+        )
+    except Exception as e:
+        # If rate limited (429) or any error, try fallback
+        if "429" in str(e) or "rate_limit" in str(e).lower():
+            print(f"⚠️ Rate limit on {primary_model}. Falling back to {fallback_model}...")
+            return client.chat.completions.create(
+                model=fallback_model,
+                messages=messages,
+                max_tokens=max_tokens,
+                temperature=temperature,
+            )
+        raise e
+
 class SearchCodebaseTool(Tool):
     name = "search_codebase"
     description = "Searches the repository for relevant code snippets based on a semantic query."
@@ -64,8 +91,7 @@ Respond with ONLY 'YES' or 'NO'.
 
 Query: {query}"""
     try:
-        response = client.chat.completions.create(
-            model=settings.GROQ_MODEL,
+        response = safe_chat_completion(
             messages=[{"role": "user", "content": prompt}],
             max_tokens=5,
             temperature=0,
@@ -103,8 +129,7 @@ def generate_rag_response(
     if rewrite:
         try:
             rewrite_prompt = f"Given the user query: '{query}', generate a single technical search query (keywords, function names, etc.) to find relevant code in a repository. Respond with ONLY the search query."
-            res = client.chat.completions.create(
-                model=settings.GROQ_MODEL,
+            res = safe_chat_completion(
                 messages=[{"role": "user", "content": rewrite_prompt}],
                 max_tokens=50,
                 temperature=0,
@@ -146,9 +171,14 @@ def generate_rag_response(
     # 3. Synthesize Final Answer
     context_parts = []
     for i, (chunk, score) in enumerate(filtered_retrieved, 1):
+        # Cap each snippet to ~100-150 lines to prevent token overflow
+        safe_content = chunk['content'][:4000] 
+        if len(chunk['content']) > 4000:
+            safe_content += "\n... [truncated for brevity] ..."
+            
         context_parts.append(
             f"File: {chunk['file_path']} (lines {chunk['start_line']}-{chunk['end_line']})\n"
-            f"```\n{chunk['content']}\n```"
+            f"```\n{safe_content}\n```"
         )
     context = "\n\n".join(context_parts)
 
@@ -165,8 +195,7 @@ Code Context:
 Final Answer:"""
 
     try:
-        completion = client.chat.completions.create(
-            model=settings.GROQ_MODEL,
+        completion = safe_chat_completion(
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
@@ -232,8 +261,7 @@ Provide:
 6. **Entry Points**: Where execution starts
 """
 
-    response = client.chat.completions.create(
-        model=settings.GROQ_MODEL,
+    response = safe_chat_completion(
         messages=[
             {"role": "system", "content": "You are an expert software architect. Analyze code and provide clear architectural overviews."},
             {"role": "user", "content": prompt},

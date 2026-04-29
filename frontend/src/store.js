@@ -122,7 +122,10 @@ export const useChatStore = create((set, get) => ({
   loading: false,
   selectedChunk: null,
 
-  setSelectedChunk: (chunk) => set({ selectedChunk: chunk }),
+  setSelectedChunk: (chunk) => {
+    set({ selectedChunk: chunk })
+    useUIStore.getState().setActiveTab('code')
+  },
 
   addMessage: (msg) =>
     set((s) => ({ messages: [...s.messages, { ...msg, id: Date.now() }] })),
@@ -173,4 +176,10 @@ export const useChatStore = create((set, get) => ({
       set({ loading: false })
     }
   },
+}))
+
+// --- UI STORE ---
+export const useUIStore = create((set) => ({
+  activeTab: 'code',
+  setActiveTab: (tab) => set({ activeTab: tab }),
 }))

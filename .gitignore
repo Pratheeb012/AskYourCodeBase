@@ -1,6 +1,9 @@
-# === SECRETS — NEVER COMMIT THESE ===
+# === SECRETS & ENVIRONMENT ===
+.env
+.env.local
+.env.*
 backend/.env
-*.env
+backend/data/*.json
 
 # === PYTHON ===
 __pycache__/

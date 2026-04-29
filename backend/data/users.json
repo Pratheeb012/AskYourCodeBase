@@ -16,5 +16,41 @@
     "is_active": true,
     "avatar_url": null,
     "created_at": "2026-04-28T10:39:42.251579"
+  },
+  "0cf6f73c-aceb-4292-8d64-9a813d6ae78e": {
+    "id": "0cf6f73c-aceb-4292-8d64-9a813d6ae78e",
+    "email": "tester@example.com",
+    "username": "tester",
+    "hashed_password": "$2b$12$18yrQRaBuPNrq/R4Au7FsuynGOz.ChjrOedKoPeGgYEQnWJwEOe9.",
+    "is_active": true,
+    "avatar_url": null,
+    "created_at": "2026-04-29T06:39:09.822829"
+  },
+  "bde3a56f-548b-4444-bb45-2751ec80e84e": {
+    "id": "bde3a56f-548b-4444-bb45-2751ec80e84e",
+    "email": "alpha@audit.com",
+    "username": "UserAlpha",
+    "hashed_password": "$2b$12$eov8Dg9p6Tlr8gXJqpYZp.U0ZF.UFvpjD0iKf6x2/Ycww/x0WSe56",
+    "is_active": true,
+    "avatar_url": null,
+    "created_at": "2026-04-29T06:55:25.180801"
+  },
+  "7f44911a-a4ea-4af0-acbf-25da988b0592": {
+    "id": "7f44911a-a4ea-4af0-acbf-25da988b0592",
+    "email": "beta@audit.com",
+    "username": "UserBeta",
+    "hashed_password": "$2b$12$AnprSZXLzAMr8M/7afh8f.eXdVU83DpKIrBVqNhiBLmNM1RDUHzLO",
+    "is_active": true,
+    "avatar_url": null,
+    "created_at": "2026-04-29T07:01:30.045691"
+  },
+  "aee10361-af35-4dfc-8acb-cfd9a2d0e9c5": {
+    "id": "aee10361-af35-4dfc-8acb-cfd9a2d0e9c5",
+    "email": "grand@tester.com",
+    "username": "GrandTester",
+    "hashed_password": "$2b$12$sGFLhETFbiX57AOurzEHL.g4PPQdLOwj1SbPIwdm9L23tkHZJ3W9W",
+    "is_active": true,
+    "avatar_url": null,
+    "created_at": "2026-04-29T07:08:11.223907"
   }
 }

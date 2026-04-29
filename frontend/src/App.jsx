@@ -34,7 +34,7 @@ function NavBar() {
         >
           🧠
         </motion.div>
-        <span className="navbar-title">CodeAI</span>
+        <h1 className="navbar-title">RepoMind</h1>
         <div className="navbar-badge">
           <span style={{ color: 'var(--accent-primary)' }}>●</span> Groq Agent
         </div>
