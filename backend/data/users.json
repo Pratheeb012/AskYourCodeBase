@@ -52,5 +52,14 @@
     "is_active": true,
     "avatar_url": null,
     "created_at": "2026-04-29T07:08:11.223907"
+  },
+  "7f7bfc0c-293f-4998-979f-b19ca1b06096": {
+    "id": "7f7bfc0c-293f-4998-979f-b19ca1b06096",
+    "email": "testuser@example.com",
+    "username": "testuser",
+    "hashed_password": "$2b$12$xJyggr1m/a2LQnoog6Zta.CqnOeo1wsUy2tCdxc9QG5uRpmLGnZ2e",
+    "is_active": true,
+    "avatar_url": null,
+    "created_at": "2026-06-18T05:41:33.222614"
   }
 }
