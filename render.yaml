@@ -1,0 +1,35 @@
+services:
+  # -------------------------
+  # BACKEND SERVICE (Python)
+  # -------------------------
+  - type: web
+    name: askyourcodebase-backend
+    env: python
+    # We navigate into the backend folder, install dependencies, and run the FastAPI server
+    buildCommand: "cd backend && pip install -r requirements.txt"
+    startCommand: "cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.0
+      - key: PORT
+        value: 10000
+      - key: OPENAI_API_KEY
+        sync: false # Requires you to enter this manually in the Render dashboard
+      - key: GROQ_API_KEY
+        sync: false # Requires you to enter this manually in the Render dashboard
+
+  # -------------------------
+  # FRONTEND SERVICE (Vite)
+  # -------------------------
+  - type: web
+    name: askyourcodebase-frontend
+    env: static
+    # Navigate into frontend, install node dependencies, and build the Vite project
+    buildCommand: "cd frontend && npm install && npm run build"
+    staticPublishPath: "./frontend/dist"
+    envVars:
+      - key: NODE_VERSION
+        value: 20.0.0
+      - key: VITE_API_URL
+        # You will need to replace this with your actual backend URL once it's created on Render
+        value: "https://askyourcodebase-backend.onrender.com"

@@ -102,8 +102,9 @@ function Message({ msg, activeRepoId }) {
               code({ node, inline, className, children, ...props }) {
                 const match = /language-(\w+)/.exec(className || '')
                 const language = match ? match[1] : 'text'
+                const isBlock = match || String(children).includes('\n')
                 
-                return !inline ? (
+                return isBlock ? (
                   <div className="code-block-wrapper" style={{ margin: '12px 0', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border-default)' }}>
                     {match && <div className="code-block-lang" style={{ background: 'var(--bg-active)', padding: '4px 12px', fontSize: '10px', color: 'var(--text-muted)', borderBottom: '1px solid var(--border-default)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{language}</div>}
                     <SyntaxHighlighter
